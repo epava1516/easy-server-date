@@ -1,0 +1,72 @@
+---
+- name: Chequeo de Discos Físicos en Host CentOS
+  hosts: centos_servers
+  tasks:
+    - name: Determinar el LVM para el punto de montaje /
+      set_fact:
+        root_device: "{{ ansible_facts.mounts | selectattr('mount', 'equalto', '/') | map(attribute='device') | first }}"
+
+    - name: Extraer el nombre del VG y LV para LVM
+      set_fact:
+        vg_name: "{{ root_device.split('-')[0] }}"
+        lv_name: "{{ root_device.split('-')[1] }}"
+
+    - name: Obtener detalles del LVM
+      command: "lvs --noheadings -o lv_name,lv_size,lv_path {{ vg_name }}/{{ lv_name }}"
+      register: lvm_details
+      changed_when: false
+
+    - name: "Obtener espacio libre en {{ lvm_details.stdout.split()[2] }}"
+      shell: "df -h --output=avail {{ lvm_details.stdout.split()[2] }} | tail -1"
+      register: root_free_space
+      changed_when: false
+
+    - name: Capturar el promedio de carga usando uptime
+      command: "uptime"
+      register: uptime_output
+      changed_when: false
+
+    - name: Capturar el número de procesos activos usando ps
+      shell: ps aux | wc -l
+      register: active_processes
+      changed_when: false
+
+    - name: Verificar si los procesos están en ejecución
+      command: pgrep -f "{{ item }}"
+      register: process_status
+      loop:
+        - php-fpm
+        - cbd
+        - centengine
+        - centreontrapd
+        - gorgoned
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Extraer el promedio de carga de 1 minuto de uptime
+      set_fact:
+        load_avg_1min: "{{ uptime_output.stdout.split()[-3] | replace(',', '') }}"
+
+    - name: Construir variables necesarias para mostrar información
+      set_fact:
+        cpu_util_percent_approx: "{{ (load_avg_1min|float / ansible_processor_cores|float) * 100 }}"
+        active_processes_list: "{{ active_processes_list|default([]) + [item.item] if item.rc == 0 else active_processes_list|default([]) }}"
+        inactive_processes_list: "{{ inactive_processes_list|default([]) + [item.item] if item.rc != 0 else inactive_processes_list|default([]) }}"
+      loop: "{{ process_status.results }}"
+
+    - name: "Informacion del estado de Centreon"
+      debug:
+        msg:
+          - "[DISCOS][{{ lvm_details.stdout.split()[2] }}] Total: {{ lvm_details.stdout.split()[1] | replace('<', '') | replace('g', ' GB')}}"
+          - "[DISCOS][{{ lvm_details.stdout.split()[2] }}] Disponible:{{ root_free_space.stdout | replace('G', ' GB') }}"
+          - "[RAM] Total: {{ (ansible_memory_mb.real.total / 1024) | round(2) }} GB"
+          - "[RAM] Disponible: {{ (ansible_memory_mb.nocache.free / 1024) | round(2) }} GB"
+          - "[CPU] Porcentaje aproximado de utilización: {{ cpu_util_percent_approx }}%"
+          - "[CPU] Número de núcleos: {{ ansible_processor_cores }}"
+          - "[CPU] Promedio de carga de 1 minuto: {{ load_avg_1min }}"
+          - "[CPU] Promedio de carga de 5 minutos: {{ uptime_output.stdout.split()[-2] | replace(',', '') }}"
+          - "[CPU] Promedio de carga de 15 minutos: {{ uptime_output.stdout.split()[-1] | replace(',', '') }}"
+          - "[PROCESOS] Número de procesos activos: {{ active_processes.stdout }}"
+          - "[PROCESOS] Procesos activos: {{ active_processes_list|join(', ') }}"
+          - "[PROCESOS] Procesos inactivos: {{ inactive_processes_list|join(', ') }}"
+...

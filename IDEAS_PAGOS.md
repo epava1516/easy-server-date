@@ -1,0 +1,1 @@
+que la aplicacion pida la ubicacion constante de anunciantes y clientes de manera obligatoria (free) si quieres desactivar dicha localizacion o automatizar el envio de la ubicacion actual pagar creditos
