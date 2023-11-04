@@ -5,20 +5,20 @@ from backend.eprofile.models import EscortProfile, EscortImage, EscortProfileTag
 class EscortImageSerializer(ModelSerializer):
     class Meta:
         model = EscortImage
-        fields = ['id', 'image', 'created_at', 'updated_at', 'is_active']
+        fields = ['id', 'escort_profile', 'image', 'created_at', 'updated_at', 'is_active']
         read_only_fields = ['created_at', 'updated_at']
 
 # Serializador para EscortProfileTag
 class EscortProfileTagSerializer(ModelSerializer):
     class Meta:
         model = EscortProfileTag
-        fields = ['id', 'tag', 'created_at', 'updated_at', 'is_active']
+        fields = ['id', 'escort_profile', 'tag', 'created_at', 'updated_at', 'is_active']
         read_only_fields = ['created_at', 'updated_at']
 
 class EscortAvailabilitySerializer(ModelSerializer):
     class Meta:
         model = EscortAvailability
-        fields = ['id', 'day_of_week', 'start_time', 'end_time', 'created_at', 'updated_at', 'is_active']
+        fields = ['id', 'escort_profile', 'day_of_week', 'start_time', 'end_time', 'created_at', 'updated_at', 'is_active']
         read_only_fields = ['created_at', 'updated_at']
 
 # Serializador para Booking

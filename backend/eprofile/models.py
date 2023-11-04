@@ -14,6 +14,7 @@ class EscortProfile(models.Model):
     # availability = models.JSONField(null=True, blank=True)
     # Expected format: {'latitude': xx.xxxx, 'longitude': yy.yyyy}
     location = models.JSONField(null=True, blank=True, default=dict)
+    tags = models.ManyToManyField(Tag, through='EscortProfileTag')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
@@ -24,7 +25,8 @@ class EscortProfile(models.Model):
 
 # Modelo para la galería de imágenes de un perfil de Escort
 class EscortImage(models.Model):
-    escort_profile = models.ForeignKey(EscortProfile, related_name='images', on_delete=models.CASCADE)
+    escort_profile = models.ManyToManyField(EscortProfile, related_name='images')
+    # escort_profile = models.ForeignKey(EscortProfile, related_name='images', on_delete=models.CASCADE)
     image = models.ImageField(upload_to='images/')
     sha256 = models.CharField(max_length=64, unique=True, null=True, blank=True)  # For deduplication
     created_at = models.DateTimeField(auto_now_add=True)
@@ -41,7 +43,7 @@ class EscortProfileTag(models.Model):
 
 class EscortAvailability(models.Model):
     escort_profile = models.ForeignKey(EscortProfile, on_delete=models.CASCADE)
-    day_of_week = models.IntegerField()  # 0=Monday, 1=Tuesday, etc.
+    day_of_week = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(6)])  # 0=Monday, 1=Tuesday, etc.
     start_time = models.TimeField()
     end_time = models.TimeField()
     created_at = models.DateTimeField(auto_now_add=True)
