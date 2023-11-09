@@ -9,6 +9,7 @@ from backend.tag.models import Tag
 class EscortProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='escort_profile')
     is_escort = models.BooleanField(default=False)
+    title = models.CharField(max_length=50, null=True, blank=True)
     description = models.TextField()
     # Expected format: [{'day': 'Monday', 'from': '09:00', 'to': '17:00'}, {...}]
     # availability = models.JSONField(null=True, blank=True)
@@ -25,8 +26,7 @@ class EscortProfile(models.Model):
 
 # Modelo para la galería de imágenes de un perfil de Escort
 class EscortImage(models.Model):
-    escort_profile = models.ManyToManyField(EscortProfile, related_name='images')
-    # escort_profile = models.ForeignKey(EscortProfile, related_name='images', on_delete=models.CASCADE)
+    escort_profile = models.ForeignKey(EscortProfile, on_delete=models.CASCADE)
     image = models.ImageField(upload_to='images/')
     sha256 = models.CharField(max_length=64, unique=True, null=True, blank=True)  # For deduplication
     created_at = models.DateTimeField(auto_now_add=True)

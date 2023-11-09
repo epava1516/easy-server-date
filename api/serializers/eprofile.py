@@ -46,5 +46,5 @@ class EscortProfileSerializer(ModelSerializer):
 
     class Meta:
         model = EscortProfile
-        fields = ['id', 'user', 'is_escort', 'description', 'availability', 'location', 'images', 'tags', 'bookings', 'reviews', 'created_at', 'updated_at', 'is_active']
+        fields = ['id', 'user', 'title', 'description', 'is_escort', 'availability', 'location', 'images', 'tags', 'bookings', 'reviews', 'created_at', 'updated_at', 'is_active']
         read_only_fields = ['created_at', 'updated_at']
